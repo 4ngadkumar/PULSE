@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pulse</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  color: white;
+}
+
+/* LOGIN */
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card {
+  background: rgba(255,255,255,0.05);
+  padding: 25px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  width: 300px;
+  text-align: center;
+}
+
+/* INPUT */
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border-radius: 10px;
+  border: none;
+}
+
+/* BUTTON */
+button {
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #6a11cb;
+  color: white;
+  cursor: pointer;
+}
+
+/* APP */
+.hidden { display: none; }
+
+.menu {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px;
+}
+
+.section {
+  display: none;
+  width: 80%;
+  margin: auto;
+  padding: 20px;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.05);
+}
+
+.active { display: block; }
+
+/* RESULT */
+.low { color: #00ff9d; }
+.medium { color: #ffd700; }
+.high { color: #ff4d4d; }
+
+/* CHAT */
+#chatbox {
+  height: 200px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.3);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+/* NOTIFICATION */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: purple;
+  padding: 12px;
+  border-radius: 10px;
+  animation: fade 0.3s;
+}
+
+@keyframes fade {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage" class="center">
+  <div class="card">
+    <h2>Pulse Login</h2>
+    <input type="email" id="email" placeholder="Enter Gmail">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">Login</button>
+    <p id="error"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
+
+  <h1 style="text-align:center;">Pulse</h1>
+
+  <div class="menu">
+    <button onclick="showSection('predictor')">Predictor</button>
+    <button onclick="showSection('assistant')">Assistant</button>
+    <button onclick="showSection('chat')">Chatbot</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+
+  <!-- PREDICTOR -->
+  <div id="predictor" class="section">
+    <h2>Health Predictor</h2>
+
+    <input type="number" id="age" placeholder="Age">
+    <input type="number" id="weight" placeholder="Weight (kg)">
+    <input type="number" id="heart" placeholder="Heart Rate">
+    <input type="number" id="sleep" placeholder="Sleep Hours">
+    <input type="number" id="water" placeholder="Water Intake (glasses)">
+    <input type="number" id="exercise" placeholder="Exercise (minutes)">
+    <input type="number" id="screen" placeholder="Screen Time (hours)">
+
+    <label>Stress Level</label>
+    <input type="range" id="stress" min="1" max="10">
+
+    <button onclick="predict()">Analyze Health</button>
+
+    <div id="result"></div>
+  </div>
+
+  <!-- ASSISTANT -->
+  <div id="assistant" class="section">
+    <h2>Personal Assistant</h2>
+
+    <input type="number" id="waterInterval" placeholder="Water Reminder (minutes)">
+    <input type="text" id="medName" placeholder="Medicine Name">
+    <input type="time" id="medTime">
+
+    <button onclick="startAssistant()">Start Assistant</button>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat" class="section">
+    <h2>Chatbot</h2>
+
+    <div id="chatbox"></div>
+    <input type="text" id="chatInput" placeholder="Type message...">
+    <button onclick="sendMessage()">Send</button>
+  </div>
+
+</div>
+
+<script>
+// LOGIN
+function login() {
+  let email = document.getElementById("email").value;
+  let pass = document.getElementById("password").value;
+
+  if (!email.endsWith("@gmail.com")) {
+    document.getElementById("error").innerText = "Use Gmail only!";
+    return;
+  }
+
+  if (pass.length < 4) {
+    document.getElementById("error").innerText = "Password too short!";
+    return;
+  }
+
+  localStorage.setItem("user", email);
+
+  document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+}
+
+// AUTO LOGIN
+if (localStorage.getItem("user")) {
+  document.getElementById("loginPage").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+}
+
+// LOGOUT
+function logout() {
+  localStorage.removeItem("user");
+  location.reload();
+}
+
+// SWITCH SECTIONS
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(sec => {
+    sec.classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+
+// PREDICTOR LOGIC
+function predict() {
+  let sleep = +document.getElementById("sleep").value;
+  let stress = +document.getElementById("stress").value;
+  let water = +document.getElementById("water").value;
+  let exercise = +document.getElementById("exercise").value;
+  let screen = +document.getElementById("screen").value;
+  let heart = +document.getElementById("heart").value;
+  let weight = +document.getElementById("weight").value;
+
+  let score = 100;
+  let tips = [];
+
+  if (sleep < 6) { score -= 15; tips.push("Improve sleep 😴"); }
+  if (stress > 7) { score -= 15; tips.push("Reduce stress 🧘"); }
+  if (water < 5) { score -= 10; tips.push("Drink more water 💧"); }
+  if (exercise < 20) { score -= 15; tips.push("Exercise more 🏃"); }
+  if (screen > 6) { score -= 10; tips.push("Reduce screen time 📱"); }
+  if (heart > 100 || heart < 50) { score -= 15; tips.push("Check heart rate ❤️"); }
+  if (weight > 90) { score -= 10; tips.push("Maintain healthy weight ⚖️"); }
+
+  let result = document.getElementById("result");
+
+  if (score > 75) {
+    result.innerHTML = `<p class="low">Low Risk 🟢</p><p>${tips.join("<br>")}</p>`;
+  } else if (score > 50) {
+    result.innerHTML = `<p class="medium">Medium Risk 🟡</p><p>${tips.join("<br>")}</p>`;
+  } else {
+    result.innerHTML = `<p class="high">High Risk 🔴</p><p>${tips.join("<br>")}</p>`;
+  }
+}
+
+// NOTIFICATION
+function notify(msg) {
+  let n = document.createElement("div");
+  n.className = "notification";
+  n.innerText = msg;
+  document.body.appendChild(n);
+  setTimeout(() => n.remove(), 3000);
+}
+
+// ASSISTANT
+function startAssistant() {
+  let water = document.getElementById("waterInterval").value;
+  let medName = document.getElementById("medName").value;
+  let medTime = document.getElementById("medTime").value;
+
+  if (water) {
+    setInterval(() => notify("💧 Time to drink water!"), water * 60000);
+  }
+
+  if (medTime) {
+    setInterval(() => {
+      let now = new Date().toTimeString().slice(0,5);
+      if (now === medTime) {
+        notify("💊 Take " + medName);
+      }
+    }, 60000);
+  }
+}
+
+// CHATBOT
+function sendMessage() {
+  let msg = document.getElementById("chatInput").value;
+  let chat = document.getElementById("chatbox");
+
+  if (!msg) return;
+
+  chat.innerHTML += "<p><b>You:</b> " + msg + "</p>";
+
+  let reply = "I'm here ❤️";
+
+  if (msg.toLowerCase().includes("sad")) reply = "You'll be okay 💙";
+  if (msg.toLowerCase().includes("stress")) reply = "Take a deep breath 🧘";
+  if (msg.toLowerCase().includes("tired")) reply = "Get some rest 😴";
+
+  chat.innerHTML += "<p><b>Bot:</b> " + reply + "</p>";
+
+  document.getElementById("chatInput").value = "";
+}
+</script>
+
+</body>
+</html>
